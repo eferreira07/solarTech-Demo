@@ -203,6 +203,7 @@
 
   // Simulate resolving SR
   function resolveSR() {
+    console.log('UEF Custom Event Start');
     const publishCustomEvent = async () => {
     const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID','V1');
     const payload = frameworkProvider.requestHelper.createPublishRequest('CustomEvent');
@@ -217,6 +218,7 @@
         console.log(err);
     });
 };
+    console.log('UEF Custom Event Finished');
     
     alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
   }
