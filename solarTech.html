@@ -209,7 +209,6 @@
     const recordContext = await tabContext.getActiveRecord();
     const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
     payload.setCustomEventName('customEventName');
-    payload.setEventPayload({ recordInfo: recordContext });
     globalContext.publish(payload);
 
     alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
