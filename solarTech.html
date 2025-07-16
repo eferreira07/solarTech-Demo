@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SolaraTech Product Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f9f9f9;
+    }
+
+    header {
+      background-color: #003366;
+      color: white;
+      padding: 16px 24px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 24px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 800px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      display: inline-block;
+      width: 150px;
+    }
+
+    .value {
+      color: #007e33;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  SolaraTech Product Portal
+</header>
+
+<div class="container">
+  <!-- Asset Info -->
+  <div class="panel">
+    <h2>Solar Inverter Details</h2>
+    <p><label>Serial Number:</label> <span id="serial">Loading...</span></p>
+    <p><label>Model:</label> <span id="model">-</span></p>
+    <p><label>Status:</label> <span id="status" class="value">-</span></p>
+    <p><label>Installed On:</label> <span id="installed">-</span></p>
+    <button onclick="publishToFusion()">✅ Validate Warranty in Fusion</button>
+  </div>
+
+  <!-- Related Claims -->
+  <div class="panel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0;">Related Claims</h2>
+      <button id="resolveBtn" disabled onclick="resolveSR()">✅ Resolve SR</button>
+    </div>
+    <div id="claimsTableContainer">Loading claims...</div>
+  </div>
+</div>
+
+<script>
+  // Sample product data
+  const productDatabase = {
+    "SN-INV-98374": {
+      model: "SolaraX 3200",
+      status: "Warranty Active",
+      installed: "2021-03-05"
+    },
+    "SN-INV-32891": {
+      model: "SolaraZ 4100",
+      status: "Warranty Expired",
+      installed: "2018-11-12"
+    },
+    "SN-INV-00001": {
+      model: "SolaraEdge 5000",
+      status: "Under Review",
+      installed: "2023-06-15"
+    }
+  };
+
+  // Sample claims data
+  const claimsDatabase = {
+    "SN-INV-98374": [
+      { id: "CLM-001", date: "2022-04-10", description: "Inverter overheating", status: "Resolved" },
+      { id: "CLM-004", date: "2023-07-15", description: "Faulty capacitor", status: "Resolved" }
+    ],
+    "SN-INV-32891": [
+      { id: "CLM-002", date: "2020-03-22", description: "Display malfunction", status: "Open" }
+    ]
+  };
+
+  // Get product ID from URL param
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get("productId") || "SN-INV-98374";
+
+  // Populate asset details
+  const product = productDatabase[productId];
+  if (product) {
+    document.getElementById("serial").textContent = productId;
+    document.getElementById("model").textContent = product.model;
+    document.getElementById("status").textContent = product.status;
+    document.getElementById("installed").textContent = product.installed;
+  } else {
+    document.getElementById("serial").textContent = productId;
+    document.getElementById("model").textContent = "Unknown";
+    document.getElementById("status").textContent = "Not Found";
+    document.getElementById("installed").textContent = "-";
+  }
+
+  // Populate claims
+  function populateClaims() {
+    const claims = claimsDatabase[productId];
+    const container = document.getElementById("claimsTableContainer");
+    const resolveBtn = document.getElementById("resolveBtn");
+
+    if (!claims || claims.length === 0) {
+      container.innerHTML = "<p>No claims found for this asset.</p>";
+      resolveBtn.disabled = true;
+      return;
+    }
+
+    let html = `<table><thead><tr><th>Claim ID</th><th>Date</th><th>Description</th><th>Status</th></tr></thead><tbody>`;
+    for (const claim of claims) {
+      html += `<tr>
+        <td>${claim.id}</td>
+        <td>${claim.date}</td>
+        <td>${claim.description}</td>
+        <td>${claim.status}</td>
+      </tr>`;
+    }
+    html += "</tbody></table>";
+    container.innerHTML = html;
+
+    // Enable resolve button only if all claims are resolved
+    const allResolved = claims.every(c => c.status === "Resolved");
+    resolveBtn.disabled = !allResolved;
+  }
+
+  // Simulate publishing to Fusion
+  function publishToFusion() {
+    if (window.parent && window.parent.UIEventsManager) {
+      window.parent.UIEventsManager.publish("setFieldValue", {
+        field: "Warranty_Status_c",
+        value: product?.status || "Unknown"
+      });
+      alert("Warranty status sent to Fusion: " + (product?.status || "Unknown"));
+    } else {
+      alert("Simulated: UIEventsManager not available");
+    }
+  }
+
+  // Simulate resolving SR
+  function resolveSR() {
+    alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
+  }
+
+  // On load
+  populateClaims();
+</script>
+
+</body>
+</html>
