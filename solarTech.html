@@ -204,19 +204,14 @@
   // Simulate resolving SR
   function resolveSR() {
     const publishCustomEvent = async () => {
-    const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID','V1');
-    const payload = frameworkProvider.requestHelper.createPublishRequest('CustomEvent');
-    payload.setCustomEventName('customEventName');
-    payload.setEventPayload({ message: 'any data' });
+    const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID');
     const globalContext = await frameworkProvider.getGlobalContext();
-    globalContext.publish(payload).then((message) => {
-        console.log(message.getResponseData());
-        console.log(message.getResponseData().getData());
-        console.log(message.getResponseData().getCustomEventName());
-    }).catch((err) => {
-        console.log(err);
-    });
-};
+    const tabContext = await frameworkProvider.getTabContext();
+    const recordContext = await tabContext.getActiveRecord();
+    const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
+    payload.setCustomEventName('customEventName');
+    recordContext.publish(payload);
+  }
     alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
   }
 
