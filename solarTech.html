@@ -160,12 +160,19 @@
   }
 
   // Populate claims
-  function populateClaims() {
-    const claims = claimsDatabase[productId];
-    const container = document.getElementById("claimsTableContainer");
-    const resolveBtn = document.getElementById("resolveBtn");
+async function populateClaims() {
+  const container = document.getElementById("claimsTableContainer");
+  const resolveBtn = document.getElementById("resolveBtn");
 
-    if (!claims || claims.length === 0) {
+  try {
+    // Fetch all claims from the MockAPI
+    const response = await fetch('https://687a6effabb83744b7ecd373.mockapi.io/api/v1/claims');
+    const allClaims = await response.json();
+
+    // Filter by current productId
+    const claims = allClaims.filter(claim => claim.serialNumber === productId);
+
+    if (claims.length === 0) {
       container.innerHTML = "<p>No claims found for this asset.</p>";
       resolveBtn.disabled = true;
       return;
@@ -174,7 +181,7 @@
     let html = `<table><thead><tr><th>Claim ID</th><th>Date</th><th>Description</th><th>Status</th></tr></thead><tbody>`;
     for (const claim of claims) {
       html += `<tr>
-        <td>${claim.id}</td>
+        <td>${claim.claimId}</td>
         <td>${claim.date}</td>
         <td>${claim.description}</td>
         <td>${claim.status}</td>
@@ -186,7 +193,13 @@
     // Enable resolve button only if all claims are resolved
     const allResolved = claims.every(c => c.status === "Resolved");
     resolveBtn.disabled = !allResolved;
+
+  } catch (error) {
+    console.error("Error fetching claims:", error);
+    container.innerHTML = "<p style='color: red;'>Failed to load claims. Please try again later.</p>";
+    resolveBtn.disabled = true;
   }
+}
 
   // Simulate publishing to Fusion
   function publishToFusion() {
@@ -202,13 +215,16 @@
   }
 
   // Simulate resolving SR
-  async function resolveSR() {
+  function resolveSR() {
+    const publishCustomEvent = async () => {
     const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID');
+    const globalContext = await frameworkProvider.getGlobalContext();
     const tabContext = await frameworkProvider.getTabContext();
     const recordContext = await tabContext.getActiveRecord();
     const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
     payload.setCustomEventName('customEventName');
     recordContext.publish(payload);
+  }
     alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
   }
 
