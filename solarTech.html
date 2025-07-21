@@ -215,18 +215,15 @@ async function populateClaims() {
   }
 
   // Simulate resolving SR
-  function resolveSR() {
-    const publishCustomEvent = async () => {
-    const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID');
-    const globalContext = await frameworkProvider.getGlobalContext();
-    const tabContext = await frameworkProvider.getTabContext();
-    const recordContext = await tabContext.getActiveRecord();
-    const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
-    payload.setCustomEventName('customEventName');
-    recordContext.publish(payload);
-  }
-    alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
-  }
+async function resolveSR() {
+  const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID');
+  const tabContext = await frameworkProvider.getTabContext();
+  const recordContext = await tabContext.getActiveRecord();
+  const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
+  payload.setCustomEventName('customEventName');
+  recordContext.publish(payload);
+  //alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
+}
 
   // On load
   populateClaims();
