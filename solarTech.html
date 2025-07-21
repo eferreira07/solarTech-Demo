@@ -80,6 +80,18 @@
     th {
       background-color: #f2f2f2;
     }
+    #resolveClaimsBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  color: #333; /* subtle gray */
+}
+
+#resolveClaimsBtn:hover {
+  color: #000; /* darker on hover */
+}
   </style>
   <script src="https://static.oracle.com/cdn/ui-events-framework/libs/ui-events-framework-client.js"></script>
 </head>
@@ -104,7 +116,10 @@
   <div class="panel">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h2 style="margin: 0;">Related Claims</h2>
-      <button id="resolveBtn" disabled onclick="resolveSR()">✅ Resolve SR</button>
+      <div>
+        <button id="resolveClaimsBtn" onclick="resolveClaims()">🔄</button>
+        <button id="resolveBtn" disabled onclick="resolveSR()">✅ Resolve SR</button>
+      </div>
     </div>
     <div id="claimsTableContainer">Loading claims...</div>
   </div>
@@ -215,14 +230,47 @@ async function populateClaims() {
   }
 
   // Simulate resolving SR
-async function resolveSR() {
-  const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID');
-  const tabContext = await frameworkProvider.getTabContext();
-  const recordContext = await tabContext.getActiveRecord();
-  const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
-  payload.setCustomEventName('customEventName');
-  recordContext.publish(payload);
-  //alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
+  function resolveSR() {
+    const publishCustomEvent = async () => {
+    const frameworkProvider = await CX_SVC_UI_EVENTS_FRAMEWORK.uiEventsFramework.initialize('MyFirstExtensionID');
+    const globalContext = await frameworkProvider.getGlobalContext();
+    const tabContext = await frameworkProvider.getTabContext();
+    const recordContext = await tabContext.getActiveRecord();
+    const payload = frameworkProvider.requestHelper.createPublishRequest('cxEventBusCustomEvent');
+    payload.setCustomEventName('customEventName');
+    recordContext.publish(payload);
+  }
+    alert("All related claims are resolved. SR can now be marked as resolved in Fusion.");
+  }
+
+  async function resolveClaims() {
+  const container = document.getElementById("claimsTableContainer");
+
+  try {
+    const response = await fetch('https://687a6effabb83744b7ecd373.mockapi.io/api/v1/claims');
+    const allClaims = await response.json();
+    const claims = allClaims.filter(claim => claim.serialNumber === productId);
+
+    if (claims.length === 0) {
+      alert("No claims found for this asset.");
+      return;
+    }
+
+    // Update each claim's status to Resolved
+    await Promise.all(claims.map(claim =>
+      fetch(`https://687a6effabb83744b7ecd373.mockapi.io/api/v1/claims/${claim.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: "Resolved" })
+      })
+    ));
+
+    alert("All related claims marked as Resolved.");
+    populateClaims(); // Refresh table
+  } catch (error) {
+    console.error("Error resolving claims:", error);
+    container.innerHTML = "<p style='color: red;'>Failed to resolve claims. Please try again later.</p>";
+  }
 }
 
   // On load
